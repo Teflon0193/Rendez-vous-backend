@@ -1,0 +1,47 @@
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const path = require("path");
+
+const rendezvousRoutes = require("./routes/rendezvous");
+const authRoutes = require("./routes/auth");
+const authDGRoutes = require("./routes/authDG"); 
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json({ limit: "10mb" })); // Increased limit for QR codes
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
+
+// Serve static files (for QR codes if needed)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Routes
+app.use("/api/rendezvous", rendezvousRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/auth/dg", authDGRoutes);
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ status: "OK", message: "Serveur fonctionne correctement" });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Erreur serveur:", err);
+  res.status(500).json({ error: "Erreur interne du serveur" });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Endpoint non trouvé" });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`📱 Accessible depuis mobile: http://192.168.88.106:${PORT}`);
+});
+
+module.exports = app;
