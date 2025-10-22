@@ -6,6 +6,8 @@ const path = require("path");
 const rendezvousRoutes = require("./routes/rendezvous");
 const authRoutes = require("./routes/auth");
 const authDGRoutes = require("./routes/authDG"); 
+const directorRoutes = require("./routes/director");
+
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/rendezvous", rendezvousRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/auth/dg", authDGRoutes);
+app.use("/api/director", directorRoutes);
+
 
 // Health check endpoint
 app.get("/health", (req, res) => {
