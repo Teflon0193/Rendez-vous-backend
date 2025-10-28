@@ -96,7 +96,7 @@ router.post("/verify", (req, res) => {
   try {
     if (id && typeof id === 'string' && id.startsWith('{')) {
       const qrData = JSON.parse(id);
-      id = qrData.id || qrData.date || qrData.nom_complet; // Essayez différents champs
+      id = qrData.id || qrData.date || qrData.nom_complet; 
     }
   } catch (e) {
     console.log("Impossible de parser l'ID comme JSON, utilisation directe");

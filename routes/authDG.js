@@ -63,7 +63,8 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 📌 Connexion DG
+
+// 📌 Login DG
 router.post("/login", async (req, res) => {
   const { email, mot_de_passe } = req.body;
 

@@ -26,7 +26,7 @@ app.use("/api/auth/dg", authDGRoutes);
 app.use("/api/director", directorRoutes);
 
 
-// Health check endpoint
+// check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "OK", message: "Serveur fonctionne correctement" });
 });
