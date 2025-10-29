@@ -167,9 +167,8 @@ router.get("/", (req, res) => {
 });
 
 
-// 📌 Get booked dates with their hours (for frontend blocking)
+// 📌 Get booked dates with their hours (for frontend blocking + color coding)
 router.get("/booked-dates", (req, res) => {
-  
   const query = `
     SELECT 
       DATE_FORMAT(date_rendez_vous, '%Y-%m-%d') AS date, 
@@ -177,7 +176,7 @@ router.get("/booked-dates", (req, res) => {
       COUNT(*) as count
     FROM rendezvous 
     GROUP BY date_rendez_vous
-    HAVING count >= 2  -- Retourne seulement les dates avec 2 rendez-vous ou plus
+    HAVING count >= 1  -- ✅ return both partial (1) and full (2) dates
   `;
 
   db.query(query, (err, results) => {
@@ -186,17 +185,16 @@ router.get("/booked-dates", (req, res) => {
       return res.status(500).json({ error: "Erreur lors de la récupération des dates réservées" });
     }
 
-    const formatted = results.map(row => {
-      return {
-        date: row.date,
-        heures: row.heures ? row.heures.split(",") : [],
-        full: true  // Indique que la date est complète (2 rendez-vous)
-      };
-    });
+    const formatted = results.map(row => ({
+      date: row.date,
+      heures: row.heures ? row.heures.split(",") : [],
+      full: row.count >= 2, // ✅ full=true if 2 appointments, else false (1)
+    }));
 
     res.json(formatted);
   });
 });
+
 
 
 // 📌 Get dates with available slots (pour le frontend)
