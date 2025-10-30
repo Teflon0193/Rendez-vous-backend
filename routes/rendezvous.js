@@ -176,7 +176,7 @@ router.get("/booked-dates", (req, res) => {
       COUNT(*) as count
     FROM rendezvous 
     GROUP BY date_rendez_vous
-    HAVING count >= 1  -- ✅ return both partial (1) and full (2) dates
+    HAVING count >= 2  -- ✅ return both partial (1) and full (2) dates
   `;
 
   db.query(query, (err, results) => {
@@ -188,7 +188,7 @@ router.get("/booked-dates", (req, res) => {
     const formatted = results.map(row => ({
       date: row.date,
       heures: row.heures ? row.heures.split(",") : [],
-      full: row.count >= 2, // ✅ full=true if 2 appointments, else false (1)
+      full: row.count >= 2, 
     }));
 
     res.json(formatted);
