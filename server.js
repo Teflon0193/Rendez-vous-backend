@@ -44,8 +44,7 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
-  console.log(`📱 Accessible depuis mobile: http://192.168.88.106:${PORT}`);
+ console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
 
 module.exports = app;
