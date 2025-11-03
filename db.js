@@ -6,7 +6,7 @@ const db = mysql.createConnection({
   user: process.env.MYSQLUSER || "root",
   password: process.env.MYSQLPASSWORD || "root",
   database: process.env.MYSQLDATABASE || "rendezvous_db",
-  port: process.env.MYSQLPORT || 3306,
+  PORT: process.env.MYSQLPORT || 3306,
 });
 
 db.connect((err) => {
