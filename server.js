@@ -3,6 +3,9 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 
+const db = require("./chemin/vers/votre/fichier/mysql");
+
+
 const rendezvousRoutes = require("./routes/rendezvous");
 const authRoutes = require("./routes/auth");
 const authDGRoutes = require("./routes/authDG"); 
