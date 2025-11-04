@@ -1,6 +1,6 @@
+require("dotenv").config();
 const mysql = require("mysql2");
 
-// Use Railway environment variables if available
 const db = mysql.createConnection({
   host: process.env.MYSQLHOST || "localhost",
   user: process.env.MYSQLUSER || "root",
@@ -14,7 +14,7 @@ db.connect((err) => {
     console.error("❌ Erreur de connexion MySQL:", err);
     return;
   }
-  console.log("✅ Connecté à MySQL");
+  console.log("✅ Connecté à MySQL:", process.env.MYSQLDATABASE);
 });
 
 module.exports = db;
