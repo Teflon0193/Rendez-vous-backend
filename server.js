@@ -14,7 +14,13 @@ const directorRoutes = require("./routes/director");
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: "https://rendez-vous-app.vercel.app", 
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: "10mb" })); // Increased limit for QR codes
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
