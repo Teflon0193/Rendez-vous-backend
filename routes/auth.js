@@ -55,43 +55,34 @@ router.put("/approve/:id", (req, res) => {
 // 📌 Login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: "Nom d'utilisateur et mot de passe requis" });
-  }
+  if (!username || !password) return res.status(400).json({ error: "Nom d'utilisateur et mot de passe requis" });
 
-  db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (results.length === 0) return res.status(404).json({ error: "Utilisateur non trouvé" });
+  try {
+    const [rows] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);
+    if (rows.length === 0) return res.status(404).json({ error: "Utilisateur non trouvé" });
 
-    const user = results[0];
-
-    if (!user.is_active) {
-      return res.status(403).json({ error: "Compte non approuvé par l'administrateur" });
-    }
+    const user = rows[0];
+    if (!user.is_active) return res.status(403).json({ error: "Compte non approuvé" });
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) return res.status(401).json({ error: "Mot de passe invalide" });
 
-    // Include role in JWT token
     const token = jwt.sign(
       { id: user.id_users, username: user.username, is_admin: user.is_admin },
       SECRET_KEY,
       { expiresIn: "1h" }
     );
 
-    // Send user info + token
     res.json({
       message: "Connexion réussie",
       token,
-      user: {
-        id: user.id_users,
-        username: user.username,
-        is_admin: user.is_admin,
-      },
+      user: { id: user.id_users, username: user.username, is_admin: user.is_admin },
     });
-  });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
-
 
 // Get all users (admin use)
 router.get("/users", (req, res) => {

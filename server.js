@@ -14,7 +14,6 @@ const app = express();
 // ✅ CORS configuration
 const allowedOrigins = [
   "https://rendez-vous-app.vercel.app", // frontend
-  "http://localhost:3000" // local dev
 ];
 
 app.use((req, res, next) => {
