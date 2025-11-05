@@ -26,8 +26,6 @@ app.use(
   })
 );
 
-// ✅ Handle preflight requests
-app.options("/*", cors());
 
 app.use(bodyParser.json({ limit: "10mb" })); // Increased limit for QR codes
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
