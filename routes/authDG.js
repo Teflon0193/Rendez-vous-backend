@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
+const db = require("../db"); // promise-based pool
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "votre_secret_jwt_super_securise_dg_2025";
 
-// 📌 Inscription DG (création de compte)
+// ---------------------------
+// Register DG (Directeur Général)
+// ---------------------------
 router.post("/register", async (req, res) => {
   const { nom, prenom, email, mot_de_passe, telephone } = req.body;
 
@@ -17,7 +19,7 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    // Vérifier si l'email existe déjà
+    // Check if email already exists
     const [existing] = await db.query(
       "SELECT id FROM directeurs_general WHERE email = ?",
       [email]
@@ -27,10 +29,10 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ error: "Cet email est déjà utilisé" });
     }
 
-    // Hasher le mot de passe
+    // Hash password
     const motDePasseHash = await bcrypt.hash(mot_de_passe, 10);
 
-    // Insérer le nouveau DG
+    // Insert new DG
     const [result] = await db.query(
       `INSERT INTO directeurs_general (nom, prenom, email, mot_de_passe, telephone) 
        VALUES (?, ?, ?, ?, ?)`,
@@ -44,13 +46,16 @@ router.post("/register", async (req, res) => {
       prenom,
       email,
     });
+
   } catch (error) {
-    console.error("Erreur inscription:", error);
+    console.error("Erreur inscription DG:", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
-// 📌 Login DG
+// ---------------------------
+// Login DG
+// ---------------------------
 router.post("/login", async (req, res) => {
   const { email, mot_de_passe } = req.body;
 
@@ -75,7 +80,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
-    // Générer le token JWT
+    // Generate JWT
     const token = jwt.sign(
       {
         dg_id: dg.id,
@@ -87,6 +92,7 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    // Remove password from response
     const { mot_de_passe: _, ...dgSansMotDePasse } = dg;
 
     res.json({
@@ -94,8 +100,9 @@ router.post("/login", async (req, res) => {
       token,
       dg: dgSansMotDePasse,
     });
+
   } catch (error) {
-    console.error("Erreur connexion:", error);
+    console.error("Erreur connexion DG:", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
