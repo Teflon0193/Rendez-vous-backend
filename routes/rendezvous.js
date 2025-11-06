@@ -77,21 +77,98 @@ router.post("/", async (req, res) => {
 // Verify an appointment
 // ---------------------------
 router.post("/verify", async (req, res) => {
-  let { id } = req.body;
+  let { id, date, nom_complet } = req.body;
+
+  console.log("=== REQUÊTE VERIFY ===");
+  console.log("Body reçu:", req.body);
+
+  // 🔍 Si l'ID est une date, utiliser comme critère de recherche
+  if (id && id.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    date = id;
+    id = null;
+  }
+
+  if (!id && !date && !nom_complet) {
+    return res.status(400).json({
+      error: "ID, date ou nom_complet requis",
+      received: req.body
+    });
+  }
+
+  let sql = "SELECT * FROM rendezvous WHERE ";
+  const params = [];
+
+  if (id) {
+    sql += "id = ?";
+    params.push(id);
+  } else if (date && nom_complet) {
+    sql += "date_rendez_vous = ? AND nom_complet LIKE ?";
+    params.push(date, `%${nom_complet}%`);
+  } else if (date) {
+    sql += "date_rendez_vous = ?";
+    params.push(date);
+  } else if (nom_complet) {
+    sql += "nom_complet LIKE ?";
+    params.push(`%${nom_complet}%`);
+  }
+
+  console.log("🔍 Requête SQL:", sql, "Params:", params);
 
   try {
-    if (id && typeof id === "string" && id.startsWith("{")) {
-      const qrData = JSON.parse(id);
-      id = qrData.id || qrData.date || qrData.nom_complet;
+    const [results] = await db.query(sql, params);
+    console.log("📊 Résultats trouvés:", results.length);
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        message: "Aucun rendez-vous trouvé",
+        critere: { id, date, nom_complet }
+      });
     }
 
-    if (!id) return res.status(400).json({ error: "ID du rendez-vous requis", received: req.body });
-
-    const [results] = await db.query("SELECT * FROM rendezvous WHERE id = ?", [id]);
-    if (results.length === 0) return res.status(404).json({ message: "Rendez-vous non trouvé", searchedId: id });
-
     const rendezvous = results[0];
-    await db.query("UPDATE rendezvous SET statut = 'Verifie' WHERE id = ?", [id]);
+    console.log("✅ Rendez-vous trouvé:", rendezvous.nom_complet);
+
+    // ⚠️ Déjà vérifié ?
+    if (rendezvous.statut === "Verifie") {
+      return res.json({
+        message: "⚠️ Déjà vérifié",
+        nom_complet: rendezvous.nom_complet,
+        raison: rendezvous.raison,
+        date: rendezvous.date_rendez_vous,
+        heure: rendezvous.heure_rendez_vous,
+        statut: "Verifie",
+        deja_verifie: true
+      });
+    }
+
+    // ✅ Générer le QR code vert
+    const qrData = {
+      id: rendezvous.id,
+      nom_complet: rendezvous.nom_complet,
+      date: rendezvous.date_rendez_vous,
+      heure: rendezvous.heure_rendez_vous,
+      raison: rendezvous.raison,
+      statut: "VERIFIE",
+      verifie_le: new Date().toISOString()
+    };
+
+    const qrCodeUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
+      color: {
+        dark: "#00FF00", // ✅ VERT VIF
+        light: "#FFFFFF"
+      },
+      width: 300,
+      margin: 2,
+      errorCorrectionLevel: "H"
+    });
+
+    // ✅ Mise à jour du statut et du QR code
+    await db.query(
+      "UPDATE rendezvous SET statut = 'Verifie', qr_code = ? WHERE id = ?",
+      [qrCodeUrl, rendezvous.id]
+    );
+
+    console.log("✅ Statut et QR code mis à jour pour ID:", rendezvous.id);
 
     res.json({
       message: "Rendez-vous vérifié ✅",
@@ -100,13 +177,15 @@ router.post("/verify", async (req, res) => {
       date: rendezvous.date_rendez_vous,
       heure: rendezvous.heure_rendez_vous,
       statut: "Verifie",
+      qr_code_vert: qrCodeUrl
     });
 
-  } catch (err) {
-    console.error("Erreur vérification rendez-vous:", err);
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error("❌ Erreur serveur:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
   }
 });
+
 
 // ---------------------------
 // List appointments with pagination
