@@ -188,6 +188,31 @@ router.post("/verify", async (req, res) => {
 });
 
 // ---------------------------
+// List appointments with pagination
+// ---------------------------
+router.get("/", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const [[{ total }]] = await db.query("SELECT COUNT(*) AS total FROM rendezvous");
+    const totalPages = Math.ceil(total / limit);
+
+    const [results] = await db.query(
+      "SELECT * FROM rendezvous ORDER BY date_rendez_vous DESC, heure_rendez_vous DESC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
+
+    res.json({ data: results, pagination: { currentPage: page, totalPages, totalItems: total, itemsPerPage: limit } });
+
+  } catch (err) {
+    console.error("Erreur listing rendez-vous:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------
 // Get appointment by ID
 // ---------------------------
 router.get("/:id", async (req, res) => {
